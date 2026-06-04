@@ -3,7 +3,7 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \title{OSTEP笔记}
-\author{trailblazer887}
+\author{trailblaer887}
 \date{2026年2月24日}
 
 
@@ -141,6 +141,11 @@
     \item \textbf{Buddy System}：将内存分成大小为2的幂次方的块，分配时找到最合适的块，优点是\textbf{分割和合并都很简单}，缺点是可能会有较大的internal fragmentation
 \end{itemize}
 
+\subsection{Paging: Introduction}
+\textbf{page}: 将内存分割成\textbf{固定大小}的块 \\
+\indent \textbf{page table}: 其中每个PTE都存储VPN到PPN的\textbf{映射}和多个\textbf{状态位} \\
+\indent \textbf{MMU}: CPU中执行地址翻译的硬件 \\
+\indent 核心问题：1. 访问页表太慢 2. 页表占用空间太大
 
 
 

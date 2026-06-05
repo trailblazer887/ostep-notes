@@ -147,6 +147,11 @@
 \indent \textbf{MMU}: CPU中执行地址翻译的硬件 \\
 \indent 核心问题：1. 访问页表太慢 2. 页表占用空间太大
 
+\subsection{Paging: Faster Translations (TLBs)}
+由OS处理TLB不命中(将内存中的相应内容放到TLB里，再访问TLB)，同时为了防止\textbf{访存不命中死循环}(跳转到处理访存不命中的地址也需要翻译，而它也不在缓存中时，就会发生死循环)，可以\textbf{直接用物理地址}或\textbf{在TLB中设立常驻有效翻译}(valid = 1，其中\textbf{wired register}告诉硬件为OS保留多少个槽位)。\\
+\indent 如果涉及到多个进程，则可以通过\textbf{重置valid = 0}或\textbf{设置address space identifier(ASID)位来区分不同进程的地址空间} \\
+\indent \textbf{替换策略}: \textbf{LRU}
+
 
 
 \end{document}

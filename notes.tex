@@ -2,6 +2,8 @@
 \usepackage{ctex}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{float}
+
 \title{OSTEP笔记}
 \author{trailblaer887}
 \date{2026年2月24日}
@@ -151,6 +153,27 @@
 由OS处理TLB不命中(将内存中的相应内容放到TLB里，再访问TLB)，同时为了防止\textbf{访存不命中死循环}(跳转到处理访存不命中的地址也需要翻译，而它也不在缓存中时，就会发生死循环)，可以\textbf{直接用物理地址}或\textbf{在TLB中设立常驻有效翻译}(valid = 1，其中\textbf{wired register}告诉硬件为OS保留多少个槽位)。\\
 \indent 如果涉及到多个进程，则可以通过\textbf{重置valid = 0}或\textbf{设置address space identifier(ASID)位来区分不同进程的地址空间} \\
 \indent \textbf{替换策略}: \textbf{LRU}
+
+\subsection{Paging: Smaller Tables}
+上一章，由于频繁访问页表太慢，我们讨论了如何提升翻译的速度。在这一章，鉴于有时页表会占有大量内存，我们将讨论如何如何减少其内存占用。
+\begin{itemize}
+    \item \textbf{Hybrid Approach: Paging and Segments} \\
+    由于这种“混合方法”会使页表的长度“可变”，所以在内存分配方面很容易造成internal Segmentation，而且管理方法较为复杂
+    \item \textbf{Multi-level Page Tables} \\
+    \textbf{核心思想：对于页表同样以“页”为单位进行分割，再用page directory索引已被分割的页表的每一页(二级)。
+    多级则再将page directory按“页”为单位进行分割，以此类推...} \\
+    以下为二级页表下虚拟地址的各部分含义：
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{figures/two_levels_page_tables.pdf}
+    \end{figure}
+    此时，只有被实际用到的虚拟地址才会分配相应的PTE，有效减少的页表的PTE数量。同时，由于每一级按“页”分割，在内存分配方面也十分方便，
+    而且页表在物理内存中也不用必须连续分布了。
+    \item \textbf{Inverted Page Tables} \\
+    使用哈希表，使\textbf{多个进程仅使用单个页表}，减少内存占用。
+
+\end{itemize}
+
 
 
 

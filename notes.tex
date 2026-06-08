@@ -185,7 +185,39 @@
     \includegraphics[width=1.0\textwidth]{figures/page_fault_control_flow.pdf}
 \end{figure}
 
-
+\subsection{Beyond Physical Memory: Policies}
+本章主要介绍和“页替换算法”及性能判断方法
+\subsubsection{Metrics}
+平均访存时间公式：
+$$
+AMAT = T_M + (P_{Miss} \cdot T_D)
+$$
+\textbf{The Optimal Replacement Policy}：最佳的(也是不切实际的)替换算法(通过未来情况做出判断)。可以将\textbf{现有的替换算法与之相比较}，从而判断当前算法与最优解的差距
+\
+\subsubsection{Policies}
+\begin{itemize}
+    \item \textbf{FIFO}
+    \item \textbf{Random}
+    \item \textbf{LFU}
+    \item \textbf{LRU} \\
+    它和LFU一样，是\textbf{基于历史}的算法。在实现方面，可以用use bit + clock algorithm(approxiating LRU) \\
+    \indent 通常LRU也可以配合dirty bit，从而减少对磁盘的读写
+    \item \textbf{ARC} \\
+    相当于对LRU的“在一些极端情况下无能为力”的改进，避免短期大量数据挤掉热数据导致性能下降。
+\end{itemize}
+\subsubsection{Other VM Policies}
+以下为有助于减少读写磁盘时间的机制
+\begin{itemize}
+    \item demanding paging(写回机制)
+    \item prefetching(预取页)
+    \item clustering(将页批量写入磁盘而不是单个写入)
+\end{itemize}
+\subsubsection{Thrashing}
+对于\textbf{抖动}问题，即多进程下的working sets(工作页)太多，物理内存不足，于是在进程切换执行中频繁发生缺页，导致性能崩溃的问题，有一些解决方案：
+\begin{itemize}
+    \item 将一些进程挂起，减小物理内存的压力
+    \item 将某些“占用内存太多”的进程直接杀掉(一些版本的Linux采用此方法)
+\end{itemize}
 
 \end{document}
 

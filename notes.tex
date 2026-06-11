@@ -218,6 +218,23 @@ $$
     \item 将一些进程挂起，减小物理内存的压力
     \item 将某些“占用内存太多”的进程直接杀掉(一些版本的Linux采用此方法)
 \end{itemize}
+\subsection{Complete Virtual Memory Systems}
+在前面介绍了许多虚拟内存的机制后，这一章我们通过两个系统的例子(\textbf{VAX/VMX}和\textbf{Linux})来看看完整的虚拟内存系统是怎么样搭建起来的。
+\subsubsection{VAX/VMS}
+\begin{itemize}
+    \item Memory Management \\
+    受限于硬件(VAX，页小，页表很大)，为了减少内存压力，VMS采用\textbf{分页与分段结合的混合策略}和\textbf{将进程页表放在内核虚拟内存中，可将页表换至磁盘中}
+    \item A Real Address Space \\
+    地址空间被分为User(P0, p1两段)和System(S)共三段，其中Page 0被标记为不可访问，用于检测\textbf{空指针访问}。
+    \item Page Replacement \\
+    为了防止一个用户进程占用太多内存(memory hogs)，故给每个进程设置能使用的页数最大值(\textbf{resident set size (RSS)})，而且每个页维护在一个FIFO表中，一旦页数超过最大值，
+    就从该进程的FIFO表中移除一页，放在\textbf{second-chance lists}(分为\textbf{clear-page free list}和\textbf{dirty-page list})中，如果有进程需要，则可从clear-page free list中
+    取页，同时，使用\textbf{clustering}的思想将dirty-page list的页聚集在一起写回磁盘，提高访问磁盘效率。
+    \item Other Neat Tricks \\
+    \textbf{demand zeroing}：当OS要分配一页给进程时(比如在heap中)，OS不会立马为它找一份空闲页，而是仅添加一个标记为不可访问的PTE。只有这一页被读或写时，会触发trap，OS(通常通过PTE中的代表\textbf{reserved for OS}的多个位)知道它时demand-zero page，这时才寻找空闲页，初始化，添加映射关系。 \\
+    \textbf{copy-on-write}：在两个地址空间都映射到同一个物理页时，将该页设置为\textbf{只读}，如果都是进行读操作，则不会进行复制。唯有其中一个进行写操作时，触发trap，OS知道该页时COW页，这时才会分配新的页，复制数据，添加映射关系。
+    
+\end{itemize}
 
 \end{document}
 

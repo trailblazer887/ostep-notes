@@ -200,7 +200,7 @@ $$
     \item \textbf{Random}
     \item \textbf{LFU}
     \item \textbf{LRU} \\
-    它和LFU一样，是\textbf{基于历史}的算法。在实现方面，可以用use bit + clock algorithm(approxiating LRU) \\
+    它和LFU一样，是\textbf{基于历史}的算法。在实现方面，可以用use bit + clock algorithm(approximating LRU) \\
     \indent 通常LRU也可以配合dirty bit，从而减少对磁盘的读写
     \item \textbf{ARC} \\
     相当于对LRU的“在一些极端情况下无能为力”的改进，避免短期大量数据挤掉热数据导致性能下降。
@@ -233,9 +233,24 @@ $$
     \item Other Neat Tricks \\
     \textbf{demand zeroing}：当OS要分配一页给进程时(比如在heap中)，OS不会立马为它找一份空闲页，而是仅添加一个标记为不可访问的PTE。只有这一页被读或写时，会触发trap，OS(通常通过PTE中的代表\textbf{reserved for OS}的多个位)知道它时demand-zero page，这时才寻找空闲页，初始化，添加映射关系。 \\
     \textbf{copy-on-write}：在两个地址空间都映射到同一个物理页时，将该页设置为\textbf{只读}，如果都是进行读操作，则不会进行复制。唯有其中一个进行写操作时，触发trap，OS知道该页时COW页，这时才会分配新的页，复制数据，添加映射关系。
-    
-\end{itemize}
 
+\end{itemize}
+\subsubsection{Linux}
+\begin{itemize}
+    \item Address Space \\
+    分为User和Kernel(分为Kernel(Logical)和Kernel(Virtual))，其中kernel(logical)为线性映射(即其对应的物理地址空间也是连续的)，且不能被swap到磁盘中，kernel(virtual)为非线性映射，使内核能映射大内存(在32-bit Linux中约为1GB)。
+    \item Page Table Structure \\
+    对于Linux for x86，其采用多级页表(通常为4级)。
+    \item Large Page Support
+    支持大于4KB的页，可以使得TLB的miss减少，但是可能导致\textbf{internal fragmentation}
+    \item The Page Cache \\
+    在内存中的page有三个来源：\textbf{memory-mapped files},\textbf{file data and metodata from devices},\textbf{anonymous memory}。page cache会追踪其中的页是clean还是dirty，dirty页会被后台线程周期性写回。\\
+    Linux采用\textbf{2Q}替换算法，其存在两个list，一个是inactive list(A1，第一次访问时放入)，一个是active list(Aq，再次访问时放入)，要替换时就从A1中找一页提出。且Linux会周期性地将active list底部的页移动到inactive list中。2Q采用an approximation of LRU(与clock replacement相似)管理两个表。
+    \item Security And Buffer Overflows \\
+    应对\textbf{buffer overflow}的方法：使用\textbf{NX bit}(AMD)或\textbf{XD bit}(x86)。\\
+    应对\textbf{return-oriented programming}(\textbf{ROP})的方法：\textbf{ASLR} \\
+    应对\textbf{Meltdown and spectre}的方法：\textbf{kernel page-table isolation(KPTI)}
+\end{itemize}
 \end{document}
 
 

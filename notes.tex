@@ -251,6 +251,33 @@ $$
     应对\textbf{return-oriented programming}(\textbf{ROP})的方法：\textbf{ASLR} \\
     应对\textbf{Meltdown and spectre}的方法：\textbf{kernel page-table isolation(KPTI)}
 \end{itemize}
+\subsection{Concurrency: An Introduction}
+介绍并发的基本概念
+\subsection{Interlude: Thread API}
+介绍线程的基本API
+\subsection{Locks}
+本章旨在介绍锁的评价标准以及各种实现
+\subsubsection{metrics}
+\begin{itemize}
+    \item correctness
+    \item fairness
+    \item performance(在单/多处理器上等等)
+\end{itemize}
+\subsubsection{methods（基于Solaris OS）}
+\begin{itemize}
+    \item Controlling Interrupts
+    \item Spin Locks with Test-And-Set
+    \item Compare-And-Swap
+    也可以用它来完成\textbf{lock-free synchronization}
+    \item Load-Linked and Store-Conditional
+    \item Fetch-And-Add
+    用它所构成的\textbf{ticket lock}可以实现fairness
+    \item Yield
+    在等待锁期间自旋使CPU空转。怎么解决呢？可以在发现锁被占有时放弃CPU控制权，避免无意义自旋。但是在多处理器上容易产生大量无意义的上下文切换，导致性能下降。
+    \item Using Queues: Sleep Instead Of Spinning
+    当锁被其他线程占用时，进入sleep queues，不参与调度。当线程unlock时h，将sleep queues中的一个线程唤醒，让其能获得锁（详情见书中具体实现）。\\
+    如果仅用Solaris OS的park()和unpark()，容易造成\textbf{wakeup/waiting race}，这时可以用setpark()声明即将要调用park()（详情见书），从而避免wakeup race。
+\end{itemize}
+而Linux中使用futex来构建锁（详情见书中具体实现）\\
+\textbf{Two-Phase Locks}：一种\textbf{混合}方法。锁被占用时，首先\textbf{自旋}等待，当发现锁仍被占用时，则进入\textbf{休眠}状态。
 \end{document}
-
-

@@ -280,4 +280,18 @@ $$
 \end{itemize}
 而Linux中使用futex来构建锁（详情见书中具体实现）\\
 \textbf{Two-Phase Locks}：一种\textbf{混合}方法。锁被占用时，首先\textbf{自旋}等待，当发现锁仍被占用时，则进入\textbf{休眠}状态。
+\subsection{Lock-based Concurrent Data Structures}
+本章主要介绍锁在各种数据结构中的应用
+\begin{itemize}
+    \item Counters(Not Scalable(accurate) / Scalable(approximate))
+    \item Linked List(a whole lock / hand-over-hand locking)\\
+    tip: lock 和 control flow在一起的时候要小心(容易忘记释放锁等...)
+    \item Queue(a whole lock / head-end lock)
+    \item Hash Table(a whole lock / 每个桶都有head-end lock)
+\end{itemize}
+附上一些重要的思想：
+\begin{itemize}
+    \item 注意异常流中的锁的获取和释放
+    \item "当性能真正影响到你的时候，再考虑性能"
+\end{itemize}
 \end{document}

@@ -300,9 +300,20 @@ $$
     \item The Producer/Consumer (Bounded Buffer) Problem\\
     根据情况，可能需要使用\textbf{多个CV} \\
     而且由于几乎所有的系统都信号的\textbf{Mesa semantics}（与之相对的是\textbf{Hoarse semantics}），即signal只是叫醒别人，不保证接下来一定会把CPU控制权交给它，
-    即被叫醒并\textbf{不等于}之后抢到锁时CV为该线程所预期的状态，又由于\textbf{spurious wakeups}存在(一次signal可能会唤醒两个线程)，两方面的原因导致使用\textbf{while}而不是if会更\textbf{可靠}。
+    即被叫醒并\textbf{不等于}之后抢到锁时CV为该线程所预期的状态，又由于\textbf{spurious wakeups}存在(一次signal可能会唤醒两个线程，即\textbf{线程会无缘无故的醒来})，两方面的原因导致使用\textbf{while}而不是if会更\textbf{可靠}。
     \item Memory allocation \\
     对于上述问题，CV只需两个即可。但是对于memory allocation，需要几个CV是未知的。唤醒free(50)和唤醒free(100)乃至各种各样free(...)的线程，在当前特定的语境下，效果都是截然不同的，无法通过可知数量的CV
     区分开。这时比较直接的方法为换\textbf{signal}为\textbf{broadcoat}，这种情况被称为\textbf{covering condition}，即把所有睡眠线程都唤醒。可能会导致性能下降。
+\end{itemize}
+\subsection{Semaphores}
+本章主要介绍Semaphores的概念及相关问题 \\
+以下为Semaphores的部分适用场景：
+\begin{itemize}
+    \item Binary Semaphores(Locks)
+    \item Semephores For Ordering(相当于“join”)
+    \item The Producer/Consumer (Bounded Buffer) Problem 
+    \item Reader-Writer Locks
+    \item The Dining Philosophers
+    \item Thread Throttling(限制同一时间进行同一任务的线程数量)
 \end{itemize}
 \end{document}

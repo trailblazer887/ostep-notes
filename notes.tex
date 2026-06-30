@@ -316,4 +316,27 @@ $$
     \item The Dining Philosophers
     \item Thread Throttling(限制同一时间进行同一任务的线程数量)
 \end{itemize}
+\subsection{Common Concurrency Problems}
+本章主要介绍了几种并发问题的类型及其解决方案 \\
+并发bugs分为以下几种类型（及Deadlock prevention）： \\
+\begin{itemize}
+    \item Non-Deadlock Bugs \\
+    分为\textbf{Atomicity-Violation Bugs}和\textbf{Ordering-Violation Bugs}
+    \item DeadLock Bugs \\
+    造成DeadLock的原因包括\textbf{复杂的相互依赖}和\textbf{封装的本性} \\
+    死锁的发生有\textbf{四个必要条件}
+    \begin{itemize}
+        \item \textbf{Mutual exlusion} \\
+        请\textbf{硬件}帮忙（例如\texttt{compare\_and\_swap}原语）
+        \item \textbf{Hold-and-wait} \\
+        一次性持有所有的锁（problematic solution）
+        \item \textbf{No preemption}
+        使用\texttt{trylock}，拿到L1锁没拿到L2，直接释放L1锁重新循环（可能造成\textbf{livelock}）
+        \item \textbf{Circular wait} \\
+        使用\textbf{total ordering}或\textbf{partial ordering}
+    \end{itemize}
+\end{itemize}
+除了\textbf{静态}的deadlock prevention，还可以通过\textbf{动态}的deadlock avoidance，即通过\textbf{动态调整调度策略}来避免思索。另外，
+如果死锁造成的风险不大，可以用\textbf{Detect and Recover}思想，周期性检测死锁，一旦检测到死锁发生，则重启整个系统（没有办法的办法，只有
+死锁的代价不大时才可以这么做应付一下！！）
 \end{document}

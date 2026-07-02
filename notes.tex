@@ -3,6 +3,8 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{xcolor}  
 
 \title{OSTEP笔记}
 \author{trailblaer887}
@@ -339,4 +341,24 @@ $$
 除了\textbf{静态}的deadlock prevention，还可以通过\textbf{动态}的deadlock avoidance，即通过\textbf{动态调整调度策略}来避免思索。另外，
 如果死锁造成的风险不大，可以用\textbf{Detect and Recover}思想，周期性检测死锁，一旦检测到死锁发生，则重启整个系统（没有办法的办法，只有
 死锁的代价不大时才可以这么做应付一下！！）
+\subsection{Event-based Concurrency (Advanced)}
+本章主要介绍的是\textbf{基于事件}的并发方法，由于只有一个主线程，所以没有线程在并发中的种种问题（死锁等） \\
+以下为该方法的核心思想\textbf{Even Loop}:
+\begin{Verbatim}[numbers=left, frame=single, formatcom=\color{black}]
+while (1) {
+    events = getEvents(); 
+    for (e in events)  
+        processEvent(e);
+}
+\end{Verbatim}
+重要API：\texttt{Select()(or poll())} \\
+该方法面临以下几个问题（以服务器为例）：
+\begin{itemize}
+    \item Blocking System Call \\
+    当even handler中有\textbf{阻塞}的系统调用时，其他client即使准备好了，主线程因为阻塞而无法相应。可以通过\textbf{Asynchronous I/O + UNIX signals}解决（当然要尽量避免阻塞调用）。
+    \item State Management \\
+    如果使用AIO，那么当I/O调用完成时，如果像把信息传给之前调用的client，怎么知道要传给那个client呢（在基于线程的服务器中就无需担心，因为线程会将client信息存入自己的栈中）？
+    我们可以手动维护一个数据结构，用来存放client相关信息（manual stack management）
+\end{itemize}
+当然，基于事件的并发还是有许多其他问题（比如多CPU的情况，对于隐式阻塞的无奈（如Paging，缺页后OS层面强制阻塞），对于API阻塞性的依赖（总是要注意更新时API阻塞性是否改变））等等。
 \end{document}

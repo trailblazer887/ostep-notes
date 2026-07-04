@@ -361,4 +361,19 @@ while (1) {
     我们可以手动维护一个数据结构，用来存放client相关信息（manual stack management）
 \end{itemize}
 当然，基于事件的并发还是有许多其他问题（比如多CPU的情况，对于隐式阻塞的无奈（如Paging，缺页后OS层面强制阻塞），对于API阻塞性的依赖（总是要注意更新时API阻塞性是否改变））等等。
+\section{Persistence}
+\subsection{I/O Devices}
+本章将对I/O设备的作基本介绍 \\
+简单来说(并不实际)，I/O devices包括\textbf{interface}(status, command, data register)和\textbf{internals}(一些硬件，如micro-controller(CPU)等)两个部分。\\
+\textbf{device driver}就像OS的"翻译官"，将具体不同的硬件操作抽象化提供给OS，使得OS能够调用统一的接口来操作I/O。
+\subsubsection{The Canonical Protocol}
+\begin{itemize}
+    \item 循环检查device状态，如果已准备好，便可执行下一步
+    \item 将相关信息写入device register中(包括data和command) \\
+    如果这一步主要由主CPU参与，则称之为\textbf{programmed I/O(PIO)}，如果不用主CPU参与则为\textbf{DMA}。\\
+    可以用\textbf{特殊命令（explicit I/O instructions）}（如x86中的in,out）或\textbf{memory mapped I/O}（像访问内存一样访问devices）来访问device register，两种方法在现代OS中仍在使用。同时可以通过\textbf{driver}来抽象化。
+    \item 等待直到device返回信息 \\
+    可以分为\textbf{轮询等待}和\textbf{硬件中断}两种方法，可用两种方法的混合(\textbf{hybrid})。对于硬件中断的优化，可以采取\textbf{coalescing}，即在要发送中断信号时等待一段时间，可以将多个中断集中成一个中断一起处理，减少trap上下文的频繁切换。
+    
+\end{itemize}
 \end{document}

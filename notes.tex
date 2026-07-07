@@ -364,8 +364,8 @@ while (1) {
 \section{Persistence}
 \subsection{I/O Devices}
 本章将对I/O设备的作基本介绍 \\
-简单来说(并不实际)，I/O devices包括\textbf{interface}(status, command, data register)和\textbf{internals}(一些硬件，如micro-controller(CPU)等)两个部分。\\
-\textbf{device driver}就像OS的"翻译官"，将具体不同的硬件操作抽象化提供给OS，使得OS能够调用统一的接口来操作I/O。
+\indent 简单来说(并不实际)，I/O devices包括\textbf{interface}(status, command, data register)和\textbf{internals}(一些硬件，如micro-controller(CPU)等)两个部分。\\
+\indent \textbf{device driver}就像OS的"翻译官"，将具体不同的硬件操作抽象化提供给OS，使得OS能够调用统一的接口来操作I/O。
 \subsubsection{The Canonical Protocol}
 \begin{itemize}
     \item 循环检查device状态，如果已准备好，便可执行下一步
@@ -374,6 +374,29 @@ while (1) {
     可以用\textbf{特殊命令（explicit I/O instructions）}（如x86中的in,out）或\textbf{memory mapped I/O}（像访问内存一样访问devices）来访问device register，两种方法在现代OS中仍在使用。同时可以通过\textbf{driver}来抽象化。
     \item 等待直到device返回信息 \\
     可以分为\textbf{轮询等待}和\textbf{硬件中断}两种方法，可用两种方法的混合(\textbf{hybrid})。对于硬件中断的优化，可以采取\textbf{coalescing}，即在要发送中断信号时等待一段时间，可以将多个中断集中成一个中断一起处理，减少trap上下文的频繁切换。
-    
 \end{itemize}
+\subsection{Hard Disk Drives}
+本章主要介绍了HDD的组成部分以及相关调度策略。
+\textbf{Interface}: sector（扇区），track（磁道），spindle（旋转轴），flatter（盘面），surface（盘面的上下面），disk head，disk arm。\\
+通常硬件厂商只保证对\textbf{一个扇区}的读写是\textbf{原子}的。\\
+HDD读写数据分为三个阶段：\textbf{seek} - \textbf{rotation} - \textbf{transfer}。 \\
+为了减少一些额外的开销，HDD还采用\textbf{track skew}，\textbf{multi-zoned}，\textbf{cache/track buffer}等技术或思想。\\
+根据“何时算写动作完成”分为\textbf{write back}（写到cache中）和\textbf{write through}（写到HDD中）\\
+结论：平均寻道距离(seek distance)是完全寻道距离（从$0$到$N$）的\textbf{三分之一}（书中有详细推导）
+以下介绍硬盘调度策略：
+\begin{itemize}
+    \item SSTF: Shortest Seek Time First \\
+    但是有\textbf{starvation}的风险
+    \item Elevator (a.k.a. SCAN or C-SCAN) \\
+    可以解决starvation，但是没有遵循\textbf{SJF(Shortest Jobs First)}的原则，故性能不佳
+    \item SPTF: Shortest Positioning Time First \\
+    同时考虑$T_{seek}$和$T_{rotation}$，但是只靠OS难以实现，因为OS掌握的HDD底层信息（如当前盘面旋转的角度等）不足以其精准推测。故HDD里集成了\textbf{内部调度器}，
+    根据当前HDD的状态信息进行调度。
+    \item I/O merging \\
+    适当调整I/O requests的顺序，将“欲访问的扇区相邻”的请求综合为一个总请求。所以，可以采用\textbf{anticipatory disk scheduling}（系统在发送I/O请求之前等待一会儿）来更好地实现聚合。
+    与之相对的是\textbf{work-conserving}（有请求就直接发送）
+\end{itemize}
+
+
+
 \end{document}

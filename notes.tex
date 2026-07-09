@@ -396,7 +396,25 @@ HDD读写数据分为三个阶段：\textbf{seek} - \textbf{rotation} - \textbf{
     适当调整I/O requests的顺序，将“欲访问的扇区相邻”的请求综合为一个总请求。所以，可以采用\textbf{anticipatory disk scheduling}（系统在发送I/O请求之前等待一会儿）来更好地实现聚合。
     与之相对的是\textbf{work-conserving}（有请求就直接发送）
 \end{itemize}
-
-
-
+\subsection{Redundant Arrays of Inexpensive Disks  (RAIDs)}
+如何使disk\textbf{更快，更大，更可靠}呢？本章主要介绍\textbf{RAIDs}技术，及其分类和每种类型的性能分析。\\
+\indent RAIDs是一个复杂的集合体，包括\textbf{multiple disks}, \textbf{memory(both volatile and non-)}, one and more \textbf{processors}，很像一个计算机系统。 \\
+\subsubsection{Interface And RAID Internals}
+文件系统发送一个\textbf{logical I/O request}给RAID，RAID通过计算将其转化为一个或多个\textbf{physical I/Os}。
+\subsubsection{Fault Model}
+本章主要关注\textbf{fail-stop}模型，在这个模型中，磁盘分为working和failed两种状态，且failed能被RAID控制器硬件捕捉到。还有更复杂的\textbf{silent failure(disk corruption)}, \textbf{latent sector error}，我们会在之后的章节进行讨论。
+\subsubsection{Metrics}
+有三个评价标准：\textbf{performance}, \textbf{throughout}, \textbf{latency}
+\subsubsection{Categories}
+\begin{itemize}
+    \item RAID Level 0: Striping \\
+    性能好，但是不可靠。
+    \item RAID Level 1: Mirroring \\
+    随机I/O性能好，可靠，但是容量少。
+    可分为 常见的\textbf{RAID-10} (or RAID 1+0, stripe of mirrors)和较不常见的\textbf{RAID-01} (or RAID 0+1, mirror of stripes)。
+    \item RAID Level 4: Saving Space With Parity \\
+    容易遇到\textbf{small-write problem}，基本被level 5替代。
+    \item RAID Level 5: Rotating Parity \\
+    为了缓解small-write problem而在level 4上做出的改进。现实中基本上可以替代level 4。可靠和容量大，但是性能受small-write problem的影响。
+\end{itemize}
 \end{document}

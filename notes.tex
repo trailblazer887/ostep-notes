@@ -417,4 +417,14 @@ HDD读写数据分为三个阶段：\textbf{seek} - \textbf{rotation} - \textbf{
     \item RAID Level 5: Rotating Parity \\
     为了缓解small-write problem而在level 4上做出的改进。现实中基本上可以替代level 4。可靠和容量大，但是性能受small-write problem的影响。
 \end{itemize}
+\subsection{Interlude: Files and Directories}
+本章主要介绍文件系统的相关概念以及一系列相关的API或系统调用。\\
+目录：保存\textbf{文件名}和\textbf{inode}的映射关系 \\
+文件：一串字节序列。\\
+每个进程中，一个\textbf{fd(file descriptor)}指向一个\textbf{open file table entry}（所有进程共享），每一个表项由指向一个\textbf{inode table entry}，即索引到相应的inode结构体，根据inode结构体上指向数据块的指针即可索引到其对应的文件数据。\\
+\textbf{mmap()} 通过将磁盘中的内容直接映射到内存中，可以进行对硬盘内容的直接访问，以此可以构建\textbf{持久化栈}等。 \\
+\textbf{ACL(access control list)}：相对于\textbf{permission bits}提供了更为精确的权限控制。 \\
+\textbf{TOCTTOU(Time of Check To Time Of Use) problem}：权限检查和执行操作的非原子化导致了潜在的提权漏洞。 \\
+\textbf{mount}：将一个设备文件（例如\texttt{/dev/sda1}）应用于某种文件系统（如\texttt{ext4}）并挂载到相应目录下（例如\texttt{/home/users}），通过访问目录即可以该文件系统的形式访问设备（将设备中杂乱无章的字节流组织起来，并可通过相应目录访问）。
+
 \end{document}

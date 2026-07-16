@@ -426,5 +426,24 @@ HDD读写数据分为三个阶段：\textbf{seek} - \textbf{rotation} - \textbf{
 \textbf{ACL(access control list)}：相对于\textbf{permission bits}提供了更为精确的权限控制。 \\
 \textbf{TOCTTOU(Time of Check To Time Of Use) problem}：权限检查和执行操作的非原子化导致了潜在的提权漏洞。 \\
 \textbf{mount}：将一个设备文件（例如\texttt{/dev/sda1}）应用于某种文件系统（如\texttt{ext4}）并挂载到相应目录下（例如\texttt{/home/users}），通过访问目录即可以该文件系统的形式访问设备（将设备中杂乱无章的字节流组织起来，并可通过相应目录访问）。
+\subsection{File System Implementation}
+本章主要介绍文件系统的一种简单实现(\textbf{vsfs, Very Simple File System}) \\
+在\textbf{vsfs}中，首先将硬盘\textbf{分块}。硬盘上的数据结构如下：
+\begin{itemize}
+    \item super block \\
+    包含\textbf{多少个inodes和data blocks、inode table的起始点、指示当前volume的文件系统类型的magic number}等等。
+    \item inode/data bitmap \\
+    指示特定位置的inode(以inode为单位)/data(以block为单位)是否被占用。当然也可以使用\textbf{free list}来实现此功能。
+    对于\textbf{空闲空间管理}，可以采用\textbf{pre-allocation policy}，即一次性预分配一系列块给文件(而不是一块一块分配)，使得文件在磁盘上连续分布，提高性能。
+    \item inodes table \\
+    管理所有的inode(内含\textbf{文件长度、权限、文件数据块的位置(指针数组)}等)。
+    \item data region \\
+    存放文件中的数据(字节流)。
+\end{itemize}
+为了支持更大的文件，可以使用\textbf{The Multi-Level Index}，即使用\textbf{indirect pointer}来指向更多的"指向数据块的指针"。
+也可以使用\textbf{entents-based approach}，即不是"一个指针指向一个块"，而是"一个指针和一个长度指示一系列块"，但是这种方法要求块分配的连续性。
+还可以使用\textbf{linked-based approach}，即inode保存指向起始块的指针，而且在当前块的末尾保存指向下一个快的指针(像"链表"一样将数据块串在一起)。
+但是这样会使随机访问会有很大的性能开销，于是可以采用\textbf{将链接信息存放在内存中}的优化方法，在内存中保存一个\textbf{FAT(file allocation table)}，其中$FAT[\text{当前块号}]=\text{指向下一个块的指针}$ \\
+书中详细讲述了读写磁盘的全流程(详细过程见书)。执行一次简单的文件读写就要进行多次I/O操作，于是可以在内存中分出一部分用来作为\textbf{热门块的cache}，由此分出\textbf{static partitioning}(在启动时便分配若干个固定大小的内存用来作为cache)和\textbf{dynamic partitioning}(全局共用一个缓存池，动态分配缓存，按需分配)两种管理cache的方法。
 
 \end{document}

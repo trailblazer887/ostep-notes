@@ -119,7 +119,7 @@
 \subsubsection{Assumptions}
 \begin{itemize}
     \item basic interface: \texttt{malloc()}和\texttt{free()}
-    \item 我们关注\textbf{external fragmentaion}
+    \item 我们关注\textbf{external fragmentation}
     \item 一旦一段内存被分配，就不能再挪动其位置了
     \item allocater管理着连续的字节区域
 \end{itemize}
@@ -445,5 +445,25 @@ HDD读写数据分为三个阶段：\textbf{seek} - \textbf{rotation} - \textbf{
 还可以使用\textbf{linked-based approach}，即inode保存指向起始块的指针，而且在当前块的末尾保存指向下一个快的指针(像"链表"一样将数据块串在一起)。
 但是这样会使随机访问会有很大的性能开销，于是可以采用\textbf{将链接信息存放在内存中}的优化方法，在内存中保存一个\textbf{FAT(file allocation table)}，其中$FAT[\text{当前块号}]=\text{指向下一个块的指针}$ \\
 书中详细讲述了读写磁盘的全流程(详细过程见书)。执行一次简单的文件读写就要进行多次I/O操作，于是可以在内存中分出一部分用来作为\textbf{热门块的cache}，由此分出\textbf{static partitioning}(在启动时便分配若干个固定大小的内存用来作为cache)和\textbf{dynamic partitioning}(全局共用一个缓存池，动态分配缓存，按需分配)两种管理cache的方法。
-
+\subsection{Locality and The Fast File System}
+本章主要介绍\textbf{FFS}与其\textbf{针对磁盘物理结构进行优化(locality)}的思想
+\subsubsection{Organizing Structure: The Cylinder Group}
+$N$个连续的柱面组合在一起称为\textbf{柱面组}(横截面由多个不同半径的磁道组成的空心圆柱)。超级块在不同的组都有备份冗余。
+\subsubsection{Policies: How To Allocate Files and Directories}
+\begin{itemize}
+    \item 分配目录 \\
+    找一个现有目录少，inode多的组。
+    \item 分配文件
+    文件的inode和数据块放在一个组;同一目录下的文件都和其目录放在一个组。
+\end{itemize}
+\subsubsection{Measuring File Locality}
+由实验数据可得：两次文件访问之间的路径深度之差为$0$或$1$的情况占$40\%$(在此实验中)，满足局部性。
+\subsubsection{The Large-File Exception}
+对于大数据文件，数据都放在一个组中会挤占了同目录下其他文件的空间。故FFS设置一组中同一文件可存入数据的最大限额，超过的数据存入
+其他组。
+\subsubsection{A Few Other Things About FFS}
+对于\textbf{小文件}容易产生\textbf{internal fragmentation}，故引入\textbf{sub-blocks}进行细粒度分配，同时修改\texttt{libc}来配合其分配行为(缓存，积累达到4KB则直接分配大块)。 \\
+\indent 进行连续读取时，容易因为\textbf{seek latency}而又要绕一整圈，故FFS可以通过检测磁盘的物理属性(\textbf{parameterization})来对分配块的位置进行调整，从而通过拉长物理距离抵消延迟。
+同时，为了减少磁盘的频繁读取，可用track buffer来存储最近读取的数据，减少I/O花销。\\
+\indent FFS也是最早支持\textbf{长文件名，软链接，原子化\texttt{rename()}}的文件系统之一，使得系统的\textbf{可用性}提高，获得了强大的用户基础，为后来的Linux ext2,ext3的发展奠定基础。
 \end{document}

@@ -466,4 +466,30 @@ $N$个连续的柱面组合在一起称为\textbf{柱面组}(横截面由多个�
 \indent 进行连续读取时，容易因为\textbf{seek latency}而又要绕一整圈，故FFS可以通过检测磁盘的物理属性(\textbf{parameterization})来对分配块的位置进行调整，从而通过拉长物理距离抵消延迟。
 同时，为了减少磁盘的频繁读取，可用track buffer来存储最近读取的数据，减少I/O花销。\\
 \indent FFS也是最早支持\textbf{长文件名，软链接，原子化\texttt{rename()}}的文件系统之一，使得系统的\textbf{可用性}提高，获得了强大的用户基础，为后来的Linux ext2,ext3的发展奠定基础。
+\subsection{Crash Consistency: FSCK and Journaling}
+因为硬盘上的数据必须具有\textbf{持久性}，所以在写数据时(有多个I/O操作)会因为断电而导致数据写入不全(\textbf{crash-consistency problem})。
+为了解决此问题，本章主要介绍两种方法：
+\begin{itemize}
+    \item \textbf{fsck}(file system checker) \\
+    遍历整个文件系统查找错误，较为耗时
+    \item \textbf{journaling}(write-ahead logging) \\
+    在硬盘中划分一块存journal，一个事务(\textbf{transaction})日志的结构为\textbf{transaction begin(TxB)}、\textbf{transaction end(TxE)}，
+    中间如果存的是元数据（和数据），则是\textbf{physical logging}；如果存的是逻辑表达(即如“添加数据块Db到文件X”)，则称为\textbf{logical logging}。 \\
+    \textbf{data journaling}：事务中间存储的是元数据和数据。 \\
+    \textbf{metadata journaling}：事务中间只存储元数据，而数据直接放在硬盘中。减少写数据的次数。 \\
+    \textbf{优化}：\textbf{Batching Log Updates}（缓存事务，将多次I/O集中起来一起更新，减少频繁读写磁盘），\textbf{Making The Log Finite}（增加journal superblock控制日志的释放）。 \\
+    整个流程(metadata journaling)：
+    \begin{itemize}
+        \item Data write
+        \item Journal metadata write
+        \item Journal commit（写上TxE）
+        \item Checkpoint metadata
+        \item Free
+    \end{itemize}
+    \textbf{}
+    \textbf{Tricy Case(Block Reuse)}：当创造\texttt{direc1}---删除\texttt{direc1}---创造\texttt{file2}(inode指向\texttt{direc1}释放的数据块，进行重用)---断电发生，
+    重启后通过日志恢复，因为目录\texttt{direc1}的数据算元数据，其在日志中，而\texttt{file2}的数据已在磁盘中，恢复后\texttt{direc1}的数据覆盖\texttt{file2}的数据，\texttt{file2}的inode就会指向\texttt{direc1}的数据。
+    对此有很多方法。在Linux ext3中在日志里添加一种新的记录\textbf{revoke record}，而删除目录会在日志中写入一个revoke record，当恢复时，系统会对revoked data不进行恢复操作，从而避免了上述问题。
+\end{itemize}
+除了上述两种方法，还有其他方法，如\textbf{Soft Updates}（严格控制所有写操作的顺序，保证一致性）, \textbf{copy-on-write(COW)}（在另外全新块进行写操作，然后改变指针指向新的数据块，断电不会丢失旧数据）, \textbf{backpointer-based consistency(BBC)}（每个数据块也有指向inode的指针，通过检查inode和其数据块是否互相指向来判断一致性）, \textbf{transaction checksum}（journal的优化，在事务中加入checksum，且一次性无顺序地将事务写入磁盘（而在上文中write一定要在commit的前面，有强制顺序），通过检查checksum来判断一致性）等。
 \end{document}

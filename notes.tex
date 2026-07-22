@@ -492,4 +492,16 @@ $N$个连续的柱面组合在一起称为\textbf{柱面组}(横截面由多个�
     对此有很多方法。在Linux ext3中在日志里添加一种新的记录\textbf{revoke record}，而删除目录会在日志中写入一个revoke record，当恢复时，系统会对revoked data不进行恢复操作，从而避免了上述问题。
 \end{itemize}
 除了上述两种方法，还有其他方法，如\textbf{Soft Updates}（严格控制所有写操作的顺序，保证一致性）, \textbf{copy-on-write(COW)}（在另外全新块进行写操作，然后改变指针指向新的数据块，断电不会丢失旧数据）, \textbf{backpointer-based consistency(BBC)}（每个数据块也有指向inode的指针，通过检查inode和其数据块是否互相指向来判断一致性）, \textbf{transaction checksum}（journal的优化，在事务中加入checksum，且一次性无顺序地将事务写入磁盘（而在上文中write一定要在commit的前面，有强制顺序），通过检查checksum来判断一致性）等。
+\subsection{Log-structured File Systems}
+本章介绍\textbf{LFS}及细节
+
+\textbf{总体概念}：写时将要写的元数据，数据，imap等先写在内存的buffer中，然后在某时一起写入磁盘。这样减少的磁头寻址的花销。 
+
+\textbf{组成部分}：Checkpoint Region(CR)，segment summary block(ss)，一系列数据块，inode，imap。其在硬盘中的组织结构天然地解决了\textbf{recursive update problem}（更新时只更新imap，防止了深目录递归更新）。 
+
+\textbf{garbage collection}：ss块指明每个块对应地inode number，如果用该number在imap中查找到地对应地inode块指向的数据块是不是同一个，则是garbage。
+
+\textbf{何时清理，清理哪些呢？}在一定时间内或buffer满了后清理。在“哪些要清理”方面有许多研究，比如hot/cold segments等
+
+\textbf{crash recovery}：双CR。一个CR坏了则用另一个。如果是当前数据坏了，则回滚到CR指向的旧状态。同时可以用\textbf{roll forward}从旧状态开始遍历，尽可能恢复之后完整保存的状态。
 \end{document}

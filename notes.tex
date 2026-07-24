@@ -504,4 +504,29 @@ $N$个连续的柱面组合在一起称为\textbf{柱面组}(横截面由多个�
 \textbf{何时清理，清理哪些呢？}在一定时间内或buffer满了后清理。在“哪些要清理”方面有许多研究，比如hot/cold segments等
 
 \textbf{crash recovery}：双CR。一个CR坏了则用另一个。如果是当前数据坏了，则回滚到CR指向的旧状态。同时可以用\textbf{roll forward}从旧状态开始遍历，尽可能恢复之后完整保存的状态。
+\subsection{Flash-based SSDs}
+本章介绍了\textbf{SSD}的基本构造(\textbf{flash-based SSD})及相关机制
+
+首先介绍\textbf{flash(NAND-based flash)}
+
+flash是由\textbf{晶体管(transistors)}构成。通过单个晶体管可以容纳的bits数可以分为\textbf{single-level cell(SLC)} flash,\textbf{multi-level cell(MLC)} flash,\textbf{triple-level cell(TLC)} flash等。
+flash chips可被组织为banks/planes,一个ban可以通过block和page两种形式访问（一个bank包含多个blocks，一个block包含多个pages）。\textbf{写数据}通常分为\textbf{三个流程}：\textbf{Read -- Erase -- Program}。
+每次erase/program都会有\textbf{wear out}，当flash chip磨损到一定程度是就变得不可用。
+\subsubsection{Flash performance And Reliability}
+可以通过并行访问flash chips提高性能。同时，如何处理erase带来的不小开销，也应在设计的考量之中。
+flash面临的可靠性问题有\textbf{wear out, disturbance}（写一页会使相邻页中的一些位翻转，如同水面上的涟漪）。
+\subsubsection{Flash-Based SSDs}
+SSD是由多个flash chips，volatile memory(non-persistent)（用来作为mapping tables的cache），flash controller(包含\textbf{flash Translation layer(FTL)}等)。可以通过\textbf{parallel}和\textbf{reduce write amplification（等于实际写入字节数/用户期望写入字节数）}来优化性能。
+通过\textbf{wear leveling（将写请求平均分散到各块中）}减缓wear out，通过\textbf{有序写入块}最小化disturbance。
+\subsubsection{FFL Organization: Log-structured FTL}
+\textbf{direct mapped}性能和可靠性都不好。故我们采用\textbf{log-structured FTL}，通过\textbf{mapping table}(在SSD的内存中，断电后可通过每一页中的\textbf{OOB(out of band)area}重构，当然也有其他方法如checkpointing等来维持persistence)维护logical block到physical address的映射，每次写\textbf{寻找下一个空闲块}而不是覆盖原有数据。
+这种天性天然实现了wear leveling（有时因为\textbf{冷数据会导致磨损不平衡}，所以需要\textbf{周期性}移动这些数据），但从而导致了\textbf{garbage collection(GC)}的需求。
+\subsubsection{Garbage Collection}
+在每一页中存入映射到本身的logical block，通过将其与mapping table比较从而判断是否为garbage，将当前block中的live page转移到其他block，然后erase当前block。\textbf{trim}（是同read，write一类的interface）可以通知SSD有block被删除（指明address和长度），这样SSD不会再追踪此block，即成为garbage。
+为了减少GC的花销，可以将清理工作尽量推迟或在设备不匆忙的时候进行。
+mapping\subsubsection{Mapping Table Size}
+分为\textbf{page-based mapping}和\textbf{block-based mapping}。前者可以进行精细控制，但是mapping table会占用很多内存；后者可以减少mapping table的占用体积，但是
+对于\textbf{“small write”}有额外的性能花销。故我们结合两者形成\textbf{hybrid mapping}（分为\textbf{log table}和\textbf{data table}），对于small write用page-based映射，减少额外的copy花销，然后适时将page-based转为block-based（可能需要copy一些page形成完整的block，根据程度分为\textbf{switch merge, partial merge, full merge}，会因此造成性能开销）。
+也可以用\textbf{page mapping + caching}方法。
+
 \end{document}

@@ -528,5 +528,25 @@ mapping\subsubsection{Mapping Table Size}
 分为\textbf{page-based mapping}和\textbf{block-based mapping}。前者可以进行精细控制，但是mapping table会占用很多内存；后者可以减少mapping table的占用体积，但是
 对于\textbf{“small write”}有额外的性能花销。故我们结合两者形成\textbf{hybrid mapping}（分为\textbf{log table}和\textbf{data table}），对于small write用page-based映射，减少额外的copy花销，然后适时将page-based转为block-based（可能需要copy一些page形成完整的block，根据程度分为\textbf{switch merge, partial merge, full merge}，会因此造成性能开销）。
 也可以用\textbf{page mapping + caching}方法。
-
+\subsection{Data Integrity and Protection}
+在上面几章，我们都是假设disk要么全好，要么全坏（\textbf{fail-stop}）。而本章我们来详细讨论一些更加真实的\textbf{disk failure modes}。
+\subsubsection{Disk Failure Modes}
+除了\textbf{fail-stop}，还有\textbf{fail-partial(包括latent sector errors(LSEs)和block corruption)}
+\subsubsection{Latent Sector Errors}
+对于LSEs，检测出来是比较容易的，我们关注于\textbf{如何处理}。当disk返回error后，可使用\textbf{冗余资源}（类似RAID）通过另一份拷贝或其他信息来重建坏的扇区。
+例如\textbf{RAID-DP}有两个parity、NetApp的\textbf{WAFL（log-structured）}、\textbf{ECC（error correcting codes）}等。
+\subsubsection{Detecting Corruption}
+对于block corruption（silent failure），我们关注于\textbf{如何检测}，而处理方式和上述相同。
+我们可以使用\textbf{checksum}来检测数据的一致性。在读取或者在\textbf{disk scrubbling}时，比较\textbf{stored checksum}和根据数据块计算出来的\textbf{computed checksum}是否一致来判断是否存在错误。
+将数据块的数据转换成几字节的checksum需要\textbf{checksum functions}。常见的有\textbf{XOR-based checksums}，addition，\textbf{Fletcher checkersum}，\textbf{cyclic redundancy check（CRC）}等。
+没有完美的checksum，将大的数据压缩成小的checksum不可避免地会产生\textbf{碰撞（collision）}。我们需要减小collision，同时避免计算过于复杂。
+\textbf{strength}和\textbf{speed}难以兼得。
+\subsubsection{A New Problem: Misdirected Writes}
+因为某些原因\textbf{写错位置}。我们可以引入额外信息\textbf{physical identifier(physical ID)}来辨识写入的位置是否正确。
+\subsubsection{One Last Problem: Lost Writes}
+设备通知高层写入动作完成，\textbf{实际上没有写入}。以上方法都失效了。但我们可以采用\textbf{write verify(read-after-write)}确保真的写进去了。
+有一些文件系统（例如ZFS）会通过在\textbf{其他写时发生变化结构}也存储checksum（inode, indirect block等）查看其上的checksum和data的checksum是否一致。
+当然，要是像inode等checksum也没有写入的话（小概率）也没辙了。
+\subsubsection{Scrubbling}
+如果只在访问的时候检查的话，那么很多的冷数据坏了就无法及时检查，而坏块会导致更多坏块。所以定期进行\textbf{全盘检查}也是有必要的。
 \end{document}
